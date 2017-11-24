@@ -45,7 +45,7 @@ def cos_dist_output_shape(shapes):
 
 def c_loss(y_true, y_pred):
 	margin = 0.40
-	return K.mean( y_true * (1-y_pred) + (1 - y_true) * K.maximum(y_pred-margin, 0) )
+	return K.mean(y_true * K.square(y_pred) + (1 - y_true) * K.square(K.maximum(margin - y_pred, 0)))
 
 def recall(y_true, y_pred):
 	true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
