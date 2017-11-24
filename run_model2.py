@@ -68,28 +68,22 @@ def f1(y_true, y_pred):
 cv_scores = []
 cv = 5
 
-batchSize = 100
-noEpochs = 50
-learn_rate = 0.001
-momen = 0.05
-inputDimension = 13810
-validation_data_split = 0.20
-nb_zhang = 5
-nb_train = 20
-invalid_samples_per_valid = 5
-
-print("Learning rate :", learn_rate)
-print("No of epochs :", noEpochs)
-print("Batch Size :", batchSize)
-
 while cv:
+
+	inputDimension = 13810
+	validation_data_split = 0.20
 	
 	# Model hyper parameters
+	batchSize = 100
+	noEpochs = 10
+	learn_rate = 0.01
+	momen = 0.05
+
 	inputQ = Input(shape=(1, inputDimension, 1))
 	inputA = Input(shape=(1, inputDimension, 1))
 	inputL = Input(shape=(1,))
 	baseNw = baseNetwork(inputDimension)
-	#baseNw.summary()
+	baseNw.summary()
 	convQues = baseNw(inputQ)
 	convAns = baseNw(inputA)
 	distance = Lambda(cosine_dist, output_shape=cos_dist_output_shape)([convQues, convAns])
@@ -99,20 +93,27 @@ while cv:
 
 	print("Training:")
 	# Data hyper parameters
+	invalid_samples_per_valid = 5
+	nb_zhang = 5
+	nb_quora = 5
+	nb_yahoo_webscope = 5
 
-	x_val,y_val = datasets.get_zhang_data(2) ## 2 validation blocks from zhang
-	validationData = ( [x_val[:,0,:].reshape(x_val.shape[0], 1, inputDimension, 1) , \
-													x_val[:,1,:].reshape(x_val.shape[0], 1, inputDimension, 1) ], y_val)
-
-	for e in range(nb_train):
-		qq, qql   = datasets.get_quora_data(1)
-		qa, qal   = datasets.get_yahoo_webscope_data(1,invalid_samples_per_valid)
-		x_train, y_train   =  np.concatenate([qq,qa],0),np.concatenate([qql,qal],0)
+	
+	print("Yahoo Webscope Data:")
+	for e in range(nb_yahoo_webscope):
+		x_train, y_train   = datasets.get_yahoo_webscope_data(1,invalid_samples_per_valid)
 		print (x_train.shape, x_train[0][0].shape)
 		questions =  x_train[:,0,:].reshape(x_train.shape[0], 1, inputDimension, 1)
 		answers = x_train[:,1,:].reshape(x_train.shape[0], 1, inputDimension, 1)
-		#model.fit([questions, answers], y_train, batch_size=batchSize, epochs=noEpochs, validation_split=validation_data_split,shuffle=1)
-		model.fit([questions, answers], y_train, batch_size=batchSize, epochs=noEpochs, validation_data=validationData ,shuffle=1)
+		model.fit([questions, answers], y_train, batch_size=batchSize, epochs=noEpochs, validation_split=validation_data_split,shuffle=1)
+
+	print("Quora Data:")
+	for e in range(nb_quora):
+		x_train, y_train   = datasets.get_quora_data(nb_quora)
+		print (x_train.shape, x_train[0][0].shape)
+		questions =  x_train[:,0,:].reshape(x_train.shape[0], 1, inputDimension, 1)
+		answers = x_train[:,1,:].reshape(x_train.shape[0], 1, inputDimension, 1)
+		model.fit([questions, answers], y_train, batch_size=batchSize, epochs=noEpochs, validation_split=validation_data_split,shuffle=1)
 
 	print("Testing:")
 	x_test,y_test = datasets.get_zhang_data(nb_zhang)
@@ -129,8 +130,4 @@ while cv:
 cv_scores = np.array(cv_scores)
 print(cv_scores)
 print("Mean : ",cv_scores.mean()," SD : ",cv_scores.std())
-
-print("\nLearning rate :", learn_rate)
-print("No of epochs :", noEpochs)
-print("Batch Size :", batchSize)
 
